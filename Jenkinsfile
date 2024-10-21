@@ -12,7 +12,7 @@ pipeline {
         }
         stage("Build") {
             steps {
-               echo "This is building the code" 
+               echo "This is for building the code" 
                sh ("whoami")
                sh ("docker build -t notes-app:latest .")
             }
