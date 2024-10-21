@@ -1,44 +1,37 @@
 @Library("Shared") _
-pipeline{
-    
-    agent { label "vinod"}
-    
-    stages{
-        
-        stage("Hello"){
-            steps{
+pipeline {
+    agent {label "node"}
+
+    stages {
+        stage("CodeClone") {
+            steps {
                 script{
-                    hello()
+                clone("https://github.com/shivaba56/django-notes-app.git","main")
                 }
             }
         }
-        stage("Code"){
-            steps{
-               script{
-                clone("https://github.com/LondheShubham153/django-notes-app.git","main")
+        stage("Build") {
+            steps {
+               echo "This is building the code" 
+               sh ("whoami")
+               sh ("docker build -t notes-app:latest .")
+            }
+        }
+        stage("Push docker image") {
+            steps {
+               withCredentials([usernamePassword(credentialsId:"dockerHubCred",passwordVariable:"dockerHubPass",usernameVariable:"dockerHubUser")]){
+               echo "Pushing docker image"
+               sh("docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}")
+               sh("docker image tag notes-app:latest ${env.dockerHubUser}/notes-app:latest")
+               sh("docker push ${env.dockerHubUser}/notes-app:latest")
                }
-                
             }
         }
-        stage("Build"){
-            steps{
-                script{
-                docker_build("notes-app","latest","trainwithshubham")
-                }
-            }
-        }
-        stage("Push to DockerHub"){
-            steps{
-                script{
-                    docker_push("notes-app","latest","trainwithshubham")
-                }
-            }
-        }
-        stage("Deploy"){
-            steps{
+        stage("Deploy") {
+            steps {
                 echo "This is deploying the code"
-                sh "docker compose down && docker compose up -d"
+                sh ("docker compose up -d")
             }
         }
+        
     }
-}
